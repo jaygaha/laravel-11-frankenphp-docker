@@ -1,0 +1,9 @@
+.git/
+.env
+docker-composer.yml
+bootstrap/cache/*
+storage/app/*
+storage/framework/cache/*
+storage/framework/views/*
+storage/logs/*
+vendor/
