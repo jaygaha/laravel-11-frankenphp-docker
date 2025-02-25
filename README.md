@@ -1,8 +1,8 @@
-# FrankenPHP and Laravel Octane with Docker + Laravel 11
+# FrankenPHP and Laravel Octane with Docker + Laravel 11 & Laravel 12
 
 This repo is a docker boilerplate to use for Laravel projects. Containers included in this docker:
 
-1. [Laravel 11](https://laravel.com/docs/)
+1. [Laravel 11 & 12](https://laravel.com/docs/)
 2. [FrankenPHP](https://frankenphp.dev/docs/docker/)
 3. MySQL
 4. Redis
@@ -99,6 +99,15 @@ $ docker compose logs <container_name>
 **If you are using podman replace `docker` with `podman`**
 
 To access the application, open your browser and navigate to the URL specified in the `APP_URL` variable in your `.env` file.
+
+
+## Upgrading
+
+Upgrading To 12.0 From 11.x
+
+```bash
+$ composer update
+```
 
 ## Contributing
 
