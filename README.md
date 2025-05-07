@@ -11,7 +11,7 @@ This repo is a docker boilerplate to use for Laravel projects. Containers includ
 7. Minio for S3
 8. MailPit
 
-The purpose of this repo is to run [Laravel 11](https://laravel.com/docs/) in a Docker container using [Octane](https://laravel.com/docs/octane) and [FrankenPHP](https://frankenphp.dev/docs/docker/).
+The purpose of this repo is to run [Laravel 11 & Laravel 12](https://laravel.com/docs/) in a Docker container using [Octane](https://laravel.com/docs/octane) and [FrankenPHP](https://frankenphp.dev/docs/docker/).
 
 ## Installation
 
