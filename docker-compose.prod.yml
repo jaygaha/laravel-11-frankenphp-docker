@@ -1,0 +1,118 @@
+services:
+    web:
+        platform: linux/amd64
+        build:
+            context: ./
+            dockerfile: ./.docker/php/Dockerfile.prod
+            target: production
+        restart: unless-stopped
+        ports:
+            - "${APP_PORT:-8000}:8000"
+        environment:
+            - APP_ENV=production
+            - APP_DEBUG=false
+        env_file:
+            - .env.production
+        volumes:
+            - ./.env.production:/var/www/html/.env:ro
+        networks:
+            - lara-prod
+        depends_on:
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 256M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    mysql:
+        image: mysql:${MYSQL_VERSION:-8.0}
+        restart: unless-stopped
+        ports:
+            - "${FORWARD_DB_PORT:-3306}:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_HOST: "localhost"
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ALLOW_EMPTY_PASSWORD: 0
+        volumes:
+            - mysql-data:/var/lib/mysql
+        networks:
+            - lara-prod
+        healthcheck:
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - -p${DB_PASSWORD}
+            interval: 10s
+            retries: 5
+            timeout: 5s
+            start_period: 30s
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.25'
+                    memory: 256M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    redis:
+        image: redis:alpine
+        restart: unless-stopped
+        command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+        volumes:
+            - redis-data:/data
+        networks:
+            - lara-prod
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            interval: 10s
+            retries: 5
+            timeout: 5s
+            start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
+                reservations:
+                    cpus: '0.1'
+                    memory: 64M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+networks:
+    lara-prod:
+        driver: bridge
+
+volumes:
+    mysql-data:
+        driver: local
+    redis-data:
+        driver: local

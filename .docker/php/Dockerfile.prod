@@ -1,0 +1,84 @@
+# Stage 1: Build stage
+FROM dunglas/frankenphp:latest-php8.3 AS builder
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN install-php-extensions \
+    gd \
+    pcntl \
+    opcache \
+    pdo \
+    pdo_mysql \
+    redis
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Copy composer files first for better layer caching
+COPY composer.json composer.lock ./
+
+# Install dependencies without dev packages
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+# Copy application files
+COPY . .
+
+# Generate optimized autoloader
+RUN composer dump-autoload --optimize --no-dev
+
+# Stage 2: Production stage
+FROM dunglas/frankenphp:latest-php8.3 AS production
+
+# Set Caddy server name - configure via environment variable in production
+ENV SERVER_NAME=":8000"
+
+# Install only runtime dependencies
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+RUN install-php-extensions \
+    gd \
+    pcntl \
+    opcache \
+    pdo \
+    pdo_mysql \
+    redis
+
+# Create non-root user
+RUN groupadd -g 1000 appgroup \
+    && useradd -u 1000 -g appgroup -m appuser
+
+WORKDIR /var/www/html
+
+# Copy application from builder
+COPY --from=builder --chown=appuser:appgroup /var/www/html /var/www/html
+
+# Copy production configs
+COPY --chown=appuser:appgroup ./.docker/php/php.prod.ini /usr/local/etc/php/php.ini
+COPY ./.docker/etc/supervisor.d/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Set proper permissions
+RUN chown -R appuser:appgroup storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Optimize Laravel for production
+RUN php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/up || exit 1
+
+# Start Supervisor as root (required for process management), workers run as appuser
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
