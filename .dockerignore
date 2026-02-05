@@ -1,9 +1,73 @@
-.git/
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+.docker/php/Dockerfile.local
+docker-compose.yml
+docker-compose.override.yml
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files (use secrets management in production)
 .env
-docker-composer.yml
-bootstrap/cache/*
+.env.*
+!.env.example
+
+# Development files
+.editorconfig
+.styleci.yml
+phpunit.xml
+phpcs.xml
+.php-cs-fixer.php
+.php-cs-fixer.cache
+
+# Testing
+tests
+phpunit.xml.dist
+.phpunit.result.cache
+coverage
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs
+
+# Node modules and frontend build tools (if not needed)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Storage (should be external volumes in production)
 storage/app/*
 storage/framework/cache/*
+storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
-vendor/
+!storage/app/.gitignore
+!storage/framework/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+!storage/logs/.gitignore
+
+# Database local files
+database/mysql-*
+database/redis-*
+
+# Local storage mounts
+storage/s3-data
+storage/mail-data
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
